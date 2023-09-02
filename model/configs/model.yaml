@@ -24,13 +24,6 @@ model:
         stride: 1,
         padding: 'same',
       },
-      {
-        in_channels: 128,
-        out_channels: 128,
-        kernel_size: 3,
-        stride: 1,
-        padding: "same",
-      },
     ]
     pool_size: 2
   mlp_config:
