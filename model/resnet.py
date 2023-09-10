@@ -6,19 +6,22 @@ class ResBlock(nn.Module):
     """
     kernel_size -> tuple[int, int] | int = 3
     """
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 kernel_size: int = 3,
-                 stride: int = 1,
-                 padding: str = "same" ) -> None:
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int = 3,
+        stride: int = 1,
+        padding: str = "same",
+    ) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
             stride=stride,
-            padding=padding
+            padding=padding,
         )
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(
@@ -26,7 +29,7 @@ class ResBlock(nn.Module):
             out_channels=out_channels,
             kernel_size=kernel_size,
             stride=1,
-            padding=padding
+            padding=padding,
         )
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.downsample: nn.Module = None
@@ -36,9 +39,9 @@ class ResBlock(nn.Module):
                     in_channels=in_channels,
                     out_channels=out_channels,
                     kernel_size=1,
-                    stride=stride
+                    stride=stride,
                 ),
-                nn.BatchNorm2d(out_channels)
+                nn.BatchNorm2d(out_channels),
             )
         self.relu = nn.ReLU()
 
@@ -49,7 +52,7 @@ class ResBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
         residual = x if self.downsample is None else self.downsample(x)
-        return self.relu(out+residual)
+        return self.relu(out + residual)
 
 
 class ResNet(nn.Module):
@@ -59,9 +62,9 @@ class ResNet(nn.Module):
         """
         super().__init__()
         self.first_conv = nn.Conv2d(**first_conv)
-        self.res_blocks = nn.ModuleList([
-            ResBlock(**block_conf) for block_conf in block_list
-        ])
+        self.res_blocks = nn.ModuleList(
+            [ResBlock(**block_conf) for block_conf in block_list]
+        )
         self.pooling = nn.AvgPool2d(kernel_size=pool_size, stride=pool_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

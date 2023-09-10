@@ -7,6 +7,7 @@ class SLPBlock(nn.Module):
     """
     _activation_fun_dict -> dict[str, callable]
     """
+
     _activation_fun_dict: dict = {
         "relu": nn.functional.relu,
         "tanh": nn.functional.tanh,
@@ -15,12 +16,14 @@ class SLPBlock(nn.Module):
         "none": lambda x: x,
     }
 
-    def __init__(self,
-                 in_size: int,
-                 out_size: int,
-                 activation_fun: str = "relu",
-                 batch_norm: bool = True,
-                 dropout: float = 0.0) -> None:
+    def __init__(
+        self,
+        in_size: int,
+        out_size: int,
+        activation_fun: str = "relu",
+        batch_norm: bool = True,
+        dropout: float = 0.0,
+    ) -> None:
         super().__init__()
         self.layer = nn.Linear(in_size, out_size)
         self.bn = nn.BatchNorm1d(out_size) if batch_norm is True else None
@@ -42,9 +45,9 @@ class MLP(nn.Module):
         block_list -> list[dict]
         """
         super().__init__()
-        self.blocks = nn.ModuleList([
-            SLPBlock(**block_conf) for block_conf in block_list
-        ])
+        self.blocks = nn.ModuleList(
+            [SLPBlock(**block_conf) for block_conf in block_list]
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = x
