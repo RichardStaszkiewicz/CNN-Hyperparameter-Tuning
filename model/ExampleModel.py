@@ -10,6 +10,7 @@ from torchvision import transforms
 from .mlp import MLP
 from .resnet import ResNet
 
+
 class FashionMNISTClassifier(pl.LightningModule):
     def __init__(self, config):
         super(FashionMNISTClassifier, self).__init__()

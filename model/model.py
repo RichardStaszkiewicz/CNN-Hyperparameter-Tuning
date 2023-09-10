@@ -11,16 +11,17 @@ from torchmetrics import Accuracy
 
 
 class ExampleModel(pl.LightningModule):
-
-    def __init__(self,
-                 regularization_ratio: float,
-                 resnet_config: dict,
-                 mlp_config: dict,
-                 lr: float,
-                 img_key: Any = 0,
-                 class_key: Any = 1,
-                 *args: Any,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        regularization_ratio: float,
+        resnet_config: dict,
+        mlp_config: dict,
+        lr: float,
+        img_key: Any = 0,
+        class_key: Any = 1,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.lr = lr
         self.resnet = ResNet(**resnet_config)
@@ -30,13 +31,11 @@ class ExampleModel(pl.LightningModule):
         self.bh_kwargs = bh_kwargs if bh_kwargs is not None else {}
         self.class_key = class_key
 
-
         self.val_emb = None
         self.val_labels = None
         self.test_emb = None
         self.test_labels = None
         self.save_hyperparameters()
-
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -46,8 +45,17 @@ class ExampleModel(pl.LightningModule):
         accuracy = Accuracy("multiclass", num_classes=10).to("cuda")
         acc = accuracy(y_pred, y)
 
-        self.log("train/accuracy", acc, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log("train/loss", loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+        self.log(
+            "train/accuracy",
+            acc,
+            prog_bar=True,
+            logger=True,
+            on_step=True,
+            on_epoch=True,
+        )
+        self.log(
+            "train/loss", loss, prog_bar=True, logger=True, on_step=True, on_epoch=True
+        )
 
         return loss
 
@@ -59,8 +67,12 @@ class ExampleModel(pl.LightningModule):
         accuracy = Accuracy("multiclass", num_classes=10).to("cuda")
         acc = accuracy(y_pred, y)
 
-        self.log("val/accuracy", acc, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log("val/loss", loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+        self.log(
+            "val/accuracy", acc, prog_bar=True, logger=True, on_step=True, on_epoch=True
+        )
+        self.log(
+            "val/loss", loss, prog_bar=True, logger=True, on_step=True, on_epoch=True
+        )
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.backbone.parameters(), lr=1e-3)
@@ -82,15 +94,28 @@ class ExampleModel(pl.LightningModule):
         means, stds = self(imgs)
         embeds = self.get_embeds(means, stds)
         loss = self.batch_handler(
-            embeds, labels, self.exp_class_distance, self.regularization_ratio, **self.bh_kwargs)
+            embeds,
+            labels,
+            self.exp_class_distance,
+            self.regularization_ratio,
+            **self.bh_kwargs,
+        )
 
-        self.test_emb = torch.cat(
-            [self.test_emb, embeds], dim=0) if self.test_emb is not None else embeds
-        self.test_labels = torch.cat(
-            [self.test_labels, labels], dim=0) if self.test_labels is not None else labels
+        self.test_emb = (
+            torch.cat([self.test_emb, embeds], dim=0)
+            if self.test_emb is not None
+            else embeds
+        )
+        self.test_labels = (
+            torch.cat([self.test_labels, labels], dim=0)
+            if self.test_labels is not None
+            else labels
+        )
 
         loss_dict = {"test/loss": loss}
-        self.log_dict(loss_dict, prog_bar=True, logger=True, on_step=False, on_epoch=True)
+        self.log_dict(
+            loss_dict, prog_bar=True, logger=True, on_step=False, on_epoch=True
+        )
 
     def on_test_epoch_end(self) -> None:
         if isinstance(self.test_emb, torch.Tensor):
@@ -104,11 +129,15 @@ class ExampleModel(pl.LightningModule):
 
         prec_dict = precision_at_k(self.test_emb, self.test_labels, self.precision_k)
         log_dict = {f"test/precision@{k}": prec_dict[k] for k in prec_dict.keys()}
-        self.log_dict(log_dict, prog_bar=True, logger=True, on_step=False, on_epoch=True)
+        self.log_dict(
+            log_dict, prog_bar=True, logger=True, on_step=False, on_epoch=True
+        )
 
         recall_dict = recall_at_k(self.test_emb, self.test_labels, self.recall_k)
         log_dict = {f"test/recall@{k}": recall_dict[k] for k in recall_dict.keys()}
-        self.log_dict(log_dict, prog_bar=True, logger=True, on_step=False, on_epoch=True)
+        self.log_dict(
+            log_dict, prog_bar=True, logger=True, on_step=False, on_epoch=True
+        )
 
         self.test_emb = None
         self.test_labels = None
