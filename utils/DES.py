@@ -31,8 +31,8 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
             if counteval + P.shape[1] <= budget:
                 return np.apply_along_axis(fn_, 0, P)
             else:
-                ret = np.zeros(P.shape[1])
                 bud_left = budget - counteval
+                ret = np.zeros(bud_left)
                 if bud_left > 0:
                     for i in range(bud_left):
                         ret[i] = fn_(P[:, i])
@@ -358,7 +358,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
 
 # Example usage:
 if __name__ == "__main__":
-    par = [0, 0]
+    par = [-100, -100]
     fn = lambda x: x[0]**2 + x[1]**2  # Example fitness function
-    result = des_classic(par, fn)
+    result = des_classic(par, fn, stopfitness=1e-10)
     print(result)
