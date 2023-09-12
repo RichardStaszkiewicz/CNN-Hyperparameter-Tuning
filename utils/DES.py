@@ -11,7 +11,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
         ret = []
         for _ in range(lmbda):
             # accounting for observation 0
-            ret.append(random.randint(1, len(history[history_sample[_]])))
+            ret.append(random.randint(1, len(history[history_sample[_]].T)))
         return ret
 
     def delete_infs_nans(x):
