@@ -10,8 +10,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
     def sample_from_history(history, history_sample, lmbda):
         ret = []
         for _ in range(lmbda):
-            # accounting for observation 0
-            ret.append(random.randint(1, len(history[history_sample[_]].T)))
+            ret.append(random.randint(0, len(history[history_sample[_]].T) - 1))
         return ret
 
     def delete_infs_nans(x):
@@ -268,8 +267,8 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
 
             # Make diffs
             for i in range(lambda_):
-                x1 = history[history_sample[i] - 1][:, x1_sample[i] - 1]
-                x2 = history[history_sample[i] - 1][:, x2_sample[i] - 1]
+                x1 = history[history_sample[i]][:, x1_sample[i]]
+                x2 = history[history_sample[i]][:, x2_sample[i]]
                 diffs[:, i] = np.sqrt(cc) * ((x1 - x2) + np.random.randn(1) * d_mean[:, history_sample[i] - 1]) + np.sqrt(1 - cc) * np.random.randn(1) * pc[:, history_sample2[i] - 1]
 
             # New population
