@@ -27,7 +27,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
             return np.finfo(float).max
 
     def fn_l(P):
-        if isinstance(P, np.ndarray):
+        if P.ndim > 1:
             if counteval + P.shape[1] <= budget:
                 return np.apply_along_axis(fn_, 0, P)
             else:
@@ -47,7 +47,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
         P = delete_infs_nans(P)
         P_repaired = delete_infs_nans(P_repaired)
 
-        if isinstance(P, np.ndarray) and isinstance(P_repaired, np.ndarray):
+        if P.ndim > 1 and P_repaired.ndim > 1:
             repaired_ind = np.all(P != P_repaired, axis=0)
             P_fit = fitness.copy()
             vec_dist = np.sum((P - P_repaired) ** 2, axis=0)
@@ -284,7 +284,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
             if Lamarckism:
                 population = population_repaired
 
-            pop_mean = np.sum(population * weights_pop[:, np.newaxis], axis=1)
+            pop_mean = np.matmul(population, weights_pop)
 
             # Evaluation
             fitness = fn_l(population)
@@ -360,4 +360,5 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
 if __name__ == "__main__":
     par = [0, 0]
     fn = lambda x: x[0]**2 + x[1]**2  # Example fitness function
-    result = des_classic(par, fn, Ft=2)
+    result = des_classic(par, fn)
+    print(result)
