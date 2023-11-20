@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import time
 
 def des_classic(par, fn, lower=None, upper=None, **kwargs):
     print(kwargs)
@@ -100,6 +101,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
     path_length = control_param("pathLength", 6)
     cp = control_param("cp", 1 / np.sqrt(N))
     maxiter = control_param("maxit", np.floor(budget / (lambda_ + 1)))
+    maxtime = control_param("time", np.Inf)
     c_Ft = control_param("c_Ft", 0)
     path_ratio = control_param("pathRatio", np.sqrt(path_length))
     hist_size = np.int64(control_param("history", np.ceil(6 + np.ceil(3 * np.sqrt(N)))))
@@ -159,8 +161,9 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
     # Initialize internal strategy parameters
     msg = None
     restart_number = -1
+    time_start = time.time()
 
-    while counteval < budget:
+    while counteval < budget and ((time.time() - time_start) < maxtime):
         restart_number += 1
         mu = np.int64(np.floor(lambda_ / 2))
         weights = np.log(mu + 1) - np.log(np.arange(1, mu + 1))
@@ -203,7 +206,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
         counter_repaired = 0
         stoptol = False
 
-        while counteval < budget and not stoptol:
+        while counteval < budget and not stoptol and ((time.time() - time_start) < maxtime):
             iter_ += 1
             hist_head = (hist_head % hist_size) + 1
             mu = np.int64(np.floor(lambda_ / 2))
@@ -272,7 +275,8 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
                 diffs[:, i] = np.sqrt(cc) * ((x1 - x2) + np.random.randn(1) * d_mean[:, history_sample[i] - 1]) + np.sqrt(1 - cc) * np.random.randn(1) * pc[:, history_sample2[i] - 1]
 
             # New population
-            population = new_mean[:, np.newaxis] + Ft * diffs + tol * (1 - 2 / N**2)**(iter_ / 2) * np.random.randn(*diffs.shape) / chi_N
+            population = new_mean[:, np.newaxis] + Ft * diffs
+            population += tol * (max(1 - 2 / N**2, 0))**(iter_ / 2) * np.random.randn(*diffs.shape) / chi_N
             population = delete_infs_nans(population)
 
             # Check constraints violations and repair the individual if necessary
@@ -323,6 +327,11 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
                 msg = "Stop fitness reached."
                 break
 
+    exe_time = time.time() - time_start
+    if exe_time > maxtime:
+        msg = "Time limit reached"
+        exe_time = maxtime
+
     cnt = {"function": int(counteval)}
 
     log = {}
@@ -350,6 +359,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
         "counts": cnt,
         "resets": restart_number,
         "convergence": 1 if iter_ >= maxiter else 0,
+        "time": exe_time,
         "message": msg,
         "diagnostic": log
     }
@@ -358,7 +368,12 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
 
 # Example usage:
 if __name__ == "__main__":
-    par = [-100, -100]
-    fn = lambda x: x[0]**2 + x[1]**2  # Example fitness function
-    result = des_classic(par, fn, stopfitness=1e-10)
+    par = [-100, -100, -100, -100]
+    fn = lambda x: x[0]**2 + x[1]**2 - x[2]**3 + 0.2*x[3]*np.log10(abs(x[3]))  # Example fitness function
+    kwargs = {
+        "stopfitness": 1e-10,
+        "lambda": 100,
+        "time": 0.1
+    }
+    result = des_classic(par, fn, **kwargs)
     print(result)
