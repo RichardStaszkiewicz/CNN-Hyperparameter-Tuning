@@ -2,8 +2,10 @@ import numpy as np
 import random
 import time
 
+
 def des_classic(par, fn, lower=None, upper=None, **kwargs):
     print(kwargs)
+
     def control_param(name, default):
         v = kwargs[name] if name in kwargs.keys() else None
         return v if v is not None else default
@@ -37,7 +39,9 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
                 if bud_left > 0:
                     for i in range(bud_left):
                         ret[i] = fn_(P[:, i])
-                return np.concatenate((ret, np.repeat(np.finfo(float).max, P.shape[1] - bud_left)))
+                return np.concatenate(
+                    (ret, np.repeat(np.finfo(float).max, P.shape[1] - bud_left))
+                )
         else:
             if counteval < budget:
                 return fn_(P)
@@ -96,7 +100,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
     weights = np.log(mu + 1) - np.log(np.arange(1, mu + 1))
     weights /= np.sum(weights)
     weights_sum_s = np.sum(weights**2)
-    mueff = control_param("mueff", (np.sum(weights)**2) / weights_sum_s)
+    mueff = control_param("mueff", (np.sum(weights) ** 2) / weights_sum_s)
     cc = control_param("ccum", mu / (mu + 2))
     path_length = control_param("pathLength", 6)
     cp = control_param("cp", 1 / np.sqrt(N))
@@ -105,7 +109,11 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
     c_Ft = control_param("c_Ft", 0)
     path_ratio = control_param("pathRatio", np.sqrt(path_length))
     hist_size = np.int64(control_param("history", np.ceil(6 + np.ceil(3 * np.sqrt(N)))))
-    Ft_scale = ((mueff + 2) / (N + mueff + 3)) / (1 + 2 * np.maximum(0, np.sqrt((mueff - 1) / (N + 1)) - 1) + (mueff + 2) / (N + mueff + 3))
+    Ft_scale = ((mueff + 2) / (N + mueff + 3)) / (
+        1
+        + 2 * np.maximum(0, np.sqrt((mueff - 1) / (N + 1)) - 1)
+        + (mueff + 2) / (N + mueff + 3)
+    )
     tol = control_param("tol", 1e-12)
     counteval = 0
     sqrt_N = np.sqrt(N)
@@ -206,7 +214,11 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
         counter_repaired = 0
         stoptol = False
 
-        while counteval < budget and not stoptol and ((time.time() - time_start) < maxtime):
+        while (
+            counteval < budget
+            and not stoptol
+            and ((time.time() - time_start) < maxtime)
+        ):
             iter_ += 1
             hist_head = (hist_head % hist_size) + 1
             mu = np.int64(np.floor(lambda_ / 2))
@@ -224,9 +236,13 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
             if log_pop:
                 pop_log[:, :, iter_ - 1] = population
             if log_best_val:
-                best_val_log = np.vstack((best_val_log, np.min([np.min(best_val_log), np.min(fitness)])))
+                best_val_log = np.vstack(
+                    (best_val_log, np.min([np.min(best_val_log), np.min(fitness)]))
+                )
             if log_worst_val:
-                worst_val_log = np.vstack((worst_val_log, np.max([np.max(worst_val_log), np.max(fitness)])))
+                worst_val_log = np.vstack(
+                    (worst_val_log, np.max([np.max(worst_val_log), np.max(fitness)]))
+                )
             if log_eigen:
                 cov_matrix = np.cov(np.transpose(population))
                 eigen_values = np.linalg.eigvals(cov_matrix)
@@ -256,14 +272,22 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
 
             # Update parameters
             if hist_head == 1:
-                pc[:, hist_head - 1] = (1 - cp) * np.zeros(N) / np.sqrt(N) + np.sqrt(mu * cp * (2 - cp)) * step
+                pc[:, hist_head - 1] = (1 - cp) * np.zeros(N) / np.sqrt(N) + np.sqrt(
+                    mu * cp * (2 - cp)
+                ) * step
             else:
-                pc[:, hist_head - 1] = (1 - cp) * pc[:, hist_head - 2] + np.sqrt(mu * cp * (2 - cp)) * step
+                pc[:, hist_head - 1] = (1 - cp) * pc[:, hist_head - 2] + np.sqrt(
+                    mu * cp * (2 - cp)
+                ) * step
 
             # Sample from history with uniform distribution
             limit = hist_head if iter_ < hist_size else hist_size
-            history_sample = np.random.choice(np.arange(0, limit), size=lambda_, replace=True)
-            history_sample2 = np.random.choice(np.arange(0, limit), size=lambda_, replace=True)
+            history_sample = np.random.choice(
+                np.arange(0, limit), size=lambda_, replace=True
+            )
+            history_sample2 = np.random.choice(
+                np.arange(0, limit), size=lambda_, replace=True
+            )
 
             x1_sample = sample_from_history(history, history_sample, lambda_)
             x2_sample = sample_from_history(history, history_sample, lambda_)
@@ -272,18 +296,36 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
             for i in range(lambda_):
                 x1 = history[history_sample[i]][:, x1_sample[i]]
                 x2 = history[history_sample[i]][:, x2_sample[i]]
-                diffs[:, i] = np.sqrt(cc) * ((x1 - x2) + np.random.randn(1) * d_mean[:, history_sample[i] - 1]) + np.sqrt(1 - cc) * np.random.randn(1) * pc[:, history_sample2[i] - 1]
+                diffs[:, i] = (
+                    np.sqrt(cc)
+                    * (
+                        (x1 - x2)
+                        + np.random.randn(1) * d_mean[:, history_sample[i] - 1]
+                    )
+                    + np.sqrt(1 - cc)
+                    * np.random.randn(1)
+                    * pc[:, history_sample2[i] - 1]
+                )
 
             # New population
             population = new_mean[:, np.newaxis] + Ft * diffs
-            population += tol * (max(1 - 2 / N**2, 0))**(iter_ / 2) * np.random.randn(*diffs.shape) / chi_N
+            population += (
+                tol
+                * (max(1 - 2 / N**2, 0)) ** (iter_ / 2)
+                * np.random.randn(*diffs.shape)
+                / chi_N
+            )
             population = delete_infs_nans(population)
 
             # Check constraints violations and repair the individual if necessary
             population_temp = population.copy()
-            population_repaired = np.apply_along_axis(bounce_back_boundary2, 0, population)
+            population_repaired = np.apply_along_axis(
+                bounce_back_boundary2, 0, population
+            )
 
-            counter_repaired = np.sum(np.any(population_temp != population_repaired, axis=0))
+            counter_repaired = np.sum(
+                np.any(population_temp != population_repaired, axis=0)
+            )
 
             if Lamarckism:
                 population = population_repaired
@@ -361,19 +403,52 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
         "convergence": 1 if iter_ >= maxiter else 0,
         "time": exe_time,
         "message": msg,
-        "diagnostic": log
+        "diagnostic": log,
     }
 
     return res
 
+
+class des_tuner_wrapper(object):
+    def __init__(self, evaluation_fc, start_config: dict, search_config: dict) -> None:
+        """
+        config -> dict: {HP_name: (lower, upper)}
+        """
+        self.eval_fc = evaluation_fc
+        self.search_config = search_config
+        self.default_config = start_config
+        self.hp_tuned = search_config.keys()
+
+    def fit(self, kwargs: dict):
+        result = des_classic(
+            np.array([self.default_config[hp] for hp in self.hp_tuned]),
+            self.eval_fc,
+            upper=np.array([self.search_config[hp][1] for hp in self.hp_tuned]),
+            lower=np.array([self.search_config[hp][0] for hp in self.hp_tuned]),
+            **kwargs
+        )
+        result["hp_names"] = self.hp_tuned
+        return result
+
+
 # Example usage:
 if __name__ == "__main__":
     par = [-100, -100, -100, -100]
-    fn = lambda x: x[0]**2 + x[1]**2 - x[2]**3 + 0.2*x[3]*np.log10(abs(x[3]))  # Example fitness function
+    fn = (
+        lambda x: x[0] ** 2 + x[1] ** 2 + x[2] ** 2 + x[3] ** 2
+    )  # Example fitness function
     kwargs = {
+        "upper": np.array([-5, -23.3, 14, 11]),
+        "lower": np.array([-101, -101, -101, -150]),
         "stopfitness": 1e-10,
         "lambda": 100,
-        "time": 0.1
+        "time": 5,
     }
     result = des_classic(par, fn, **kwargs)
+    print(result)
+    result = des_tuner_wrapper(
+        fn,
+        {"x1": -50, "x2": -20, "x3": -100, "x4": 10},
+        {"x1": (-101, -5), "x2": (-101, -23.3), "x3": (-101, 14), "x4": (3, 11)},
+    ).fit({"stopfitness": 1e-10,"lambda": 100,"time": 5,})
     print(result)
