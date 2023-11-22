@@ -1,6 +1,8 @@
 import numpy as np
 import random
 import time
+import transpilation
+import yaml
 
 
 def des_classic(par, fn, lower=None, upper=None, **kwargs):
@@ -458,3 +460,15 @@ if __name__ == "__main__":
         }
     )
     print(result)
+    with open("CNN-Hyperparameter-Tuning/model/configs/model.yaml", "r") as stream:
+        default_config = yaml.safe_load(stream)
+    result = des_tuner_wrapper(
+        transpilation.fx(["lr"], "ptl/val_loss", default_config["model"])([0.01]),
+        {"lr": 0.002},
+        {"lr": (0.001, 0.1)}
+    ).fit(
+        {
+            "lambda": 4,
+            "budget": 15,
+        }
+    )
