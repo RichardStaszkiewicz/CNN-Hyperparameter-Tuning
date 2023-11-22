@@ -1,8 +1,6 @@
 import numpy as np
 import random
 import time
-import transpilation
-import yaml
 
 
 def des_classic(par, fn, lower=None, upper=None, **kwargs):
@@ -106,7 +104,7 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
     cc = control_param("ccum", mu / (mu + 2))
     path_length = control_param("pathLength", 6)
     cp = control_param("cp", 1 / np.sqrt(N))
-    maxiter = control_param("maxit", np.floor(budget / (lambda_ + 1)))
+    maxiter = control_param("maxit", np.floor(budget / (lambda_ + 1)).astype(np.int64))
     maxtime = control_param("time", np.Inf)
     c_Ft = control_param("c_Ft", 0)
     path_ratio = control_param("pathRatio", np.sqrt(path_length))
@@ -147,21 +145,21 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
 
     # Preallocate logging structures
     if log_Ft:
-        Ft_log = np.zeros((0, 1))
+        Ft_log = np.zeros(1)
     if log_value:
         value_log = np.zeros((0, lambda_))
     if log_mean:
-        mean_log = np.zeros((0, 1))
+        mean_log = np.zeros(1)
     if log_mean_cord:
-        mean_cords_log = np.zeros((0, N))
+        mean_cords_log = np.zeros(N)
     if log_pop:
         pop_log = np.zeros((N, lambda_, maxiter))
     if log_best_val:
-        best_val_log = np.zeros((0, 1))
+        best_val_log = np.array(np.Infinity)
     if log_worst_val:
-        worst_val_log = np.zeros((0, 1))
+        worst_val_log = np.zeros(1)
     if log_eigen:
-        eigen_log = np.zeros((0, N))
+        eigen_log = np.zeros(lambda_)
 
     # Allocate buffers
     d_mean = np.zeros((N, hist_size))
@@ -443,32 +441,21 @@ if __name__ == "__main__":
         "upper": np.array([-5, -23.3, 14, 11]),
         "lower": np.array([-101, -101, -101, -150]),
         "stopfitness": 1e-10,
-        "lambda": 100,
+        "lambda": 5,
         "time": 5,
+        "diag": True
     }
     result = des_classic(par, fn, **kwargs)
     print(result)
-    result = des_tuner_wrapper(
-        fn,
-        {"x1": -50, "x2": -20, "x3": -100, "x4": 10},
-        {"x1": (-101, -5), "x2": (-101, -23.3), "x3": (-101, 14), "x4": (3, 11)},
-    ).fit(
-        {
-            "stopfitness": 1e-10,
-            "lambda": 100,
-            "time": 5,
-        }
-    )
-    print(result)
-    with open("CNN-Hyperparameter-Tuning/model/configs/model.yaml", "r") as stream:
-        default_config = yaml.safe_load(stream)
-    result = des_tuner_wrapper(
-        transpilation.fx(["lr"], "ptl/val_loss", default_config["model"])([0.01]),
-        {"lr": 0.002},
-        {"lr": (0.001, 0.1)}
-    ).fit(
-        {
-            "lambda": 4,
-            "budget": 15,
-        }
-    )
+    # result = des_tuner_wrapper(
+    #     fn,
+    #     {"x1": -50, "x2": -20, "x3": -100, "x4": 10},
+    #     {"x1": (-101, -5), "x2": (-101, -23.3), "x3": (-101, 14), "x4": (3, 11)},
+    # ).fit(
+    #     {
+    #         "stopfitness": 1e-10,
+    #         "lambda": 100,
+    #         "time": 5,
+    #     }
+    # )
+    # print(result)
