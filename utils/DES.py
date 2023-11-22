@@ -450,5 +450,11 @@ if __name__ == "__main__":
         fn,
         {"x1": -50, "x2": -20, "x3": -100, "x4": 10},
         {"x1": (-101, -5), "x2": (-101, -23.3), "x3": (-101, 14), "x4": (3, 11)},
-    ).fit({"stopfitness": 1e-10,"lambda": 100,"time": 5,})
+    ).fit(
+        {
+            "stopfitness": 1e-10,
+            "lambda": 100,
+            "time": 5,
+        }
+    )
     print(result)
