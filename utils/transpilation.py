@@ -64,6 +64,7 @@ def actualise_config(config):
         if "resnet_out_channels_l" in k
     ]
     for l in resnet:
+        config[f"resnet_out_channels_l{l}"] = int(np.round(config[f"resnet_out_channels_l{l}"]))
         config["resnet_config"]["block_list"][l]["out_channels"] = config[
             f"resnet_out_channels_l{l}"
         ]
@@ -79,6 +80,7 @@ def actualise_config(config):
         if "resnet_kernel_size_l" in k
     ]
     for l in resnet:
+        config[f"resnet_kernel_size_l{l}"] = int(np.round(config[f"resnet_kernel_size_l{l}"]))
         config["resnet_config"]["block_list"][l]["kernel_size"] = config[
             f"resnet_kernel_size_l{l}"
         ]
@@ -88,6 +90,7 @@ def actualise_config(config):
         if "resnet_stride_l" in k
     ]
     for l in resnet:
+        config[f"resnet_stride_l{l}"] = int(np.round(config[f"resnet_stride_l{l}"]))
         config["resnet_config"]["block_list"][l]["stride"] = config[
             f"resnet_stride_l{l}"
         ]
@@ -97,6 +100,7 @@ def actualise_config(config):
         if "resnet_padding_l" in k
     ]
     for l in resnet:
+        config[f"resnet_padding_l{l}"] = int(np.round(config[f"resnet_padding_l{l}"]))
         config["resnet_config"]["block_list"][l]["padding"] = config[
             f"resnet_padding_l{l}"
         ]
@@ -105,6 +109,7 @@ def actualise_config(config):
 
     mlp = [int(k.replace("mlp_out_l", "")) for k in config.keys() if "mlp_out_l" in k]
     for l in mlp:
+        config[f"mlp_out_l{l}"] = int(np.round(config[f"mlp_out_l{l}"]))
         config["mlp_config"]["block_list"][l]["out_size"] = config[f"mlp_out_l{l}"]
         try:
             config["mlp_config"]["block_list"][l + 1]["in_size"] = config[
@@ -119,6 +124,7 @@ def actualise_config(config):
         ]
     mlp = [int(k.replace("mlp_bn_l", "")) for k in config.keys() if "mlp_bn_l" in k]
     for bn in mlp:
+        config[f"mlp_bn_l{bn}"] = int(np.round(config[f"mlp_bn_l{bn}"]))
         config["mlp_config"]["block_list"][bn]["batch_norm"] = config[f"mlp_bn_l{bn}"]
     mlp = [int(k.replace("mlp_do_l", "")) for k in config.keys() if "mlp_do_l" in k]
     for do in mlp:
