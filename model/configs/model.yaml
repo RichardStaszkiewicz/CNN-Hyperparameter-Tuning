@@ -4,6 +4,8 @@ model:
   beta_1: 0.9
   beta_2: 0.999
   lr: 1.0e-3
+  init_width: 28
+  init_length: 28
   resnet_config:
     first_conv:
       in_channels: 1

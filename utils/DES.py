@@ -443,7 +443,7 @@ if __name__ == "__main__":
         "stopfitness": 1e-10,
         "lambda": 5,
         "time": 5,
-        "diag": True
+        "diag": True,
     }
     result = des_classic(par, fn, **kwargs)
     print(result)

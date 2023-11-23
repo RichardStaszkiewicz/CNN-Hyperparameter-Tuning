@@ -1,12 +1,117 @@
 from modules import plmodules as plm
 import pytorch_lightning as pl
 from datetime import timedelta
+import numpy as np
+
+
+def count_mlp_in(config):
+    if config["resnet_config"]["first_conv"]["padding"] == "same":
+        width = np.ceil(
+            config["init_width"] / config["resnet_config"]["first_conv"]["stride"]
+        )
+        length = np.ceil(
+            config["init_length"] / config["resnet_config"]["first_conv"]["stride"]
+        )
+    else:
+        width = np.floor(
+            (
+                config["init_width"]
+                - config["resnet_config"]["first_conv"]["kernel_size"]
+                + 2 * config["resnet_config"]["first_conv"]["padding"]
+            )
+            / config["resnet_config"]["first_conv"]["stride"]
+            + 1
+        )
+        length = np.floor(
+            (
+                config["init_length"]
+                - config["resnet_config"]["first_conv"]["kernel_size"]
+                + 2 * config["resnet_config"]["first_conv"]["padding"]
+            )
+            / config["resnet_config"]["first_conv"]["stride"]
+            + 1
+        )
+
+    for b in config["resnet_config"]["block_list"]:
+        if b["padding"] == "same":
+            width = np.ceil(width / b["stride"])
+            length = np.ceil(length / b["stride"])
+        else:
+            width = np.floor(
+                (width - b["kernel_size"] + 2 * b["padding"]) / b["stride"] + 1
+            )
+            length = np.floor(
+                (length - b["kernel_size"] + 2 * b["padding"]) / b["stride"] + 1
+            )
+
+    width = np.floor(
+        (width - config["resnet_config"]["pool_size"])
+        / config["resnet_config"]["pool_size"]
+        + 1
+    )
+    length = np.floor(
+        (length - config["resnet_config"]["pool_size"])
+        / config["resnet_config"]["pool_size"]
+        + 1
+    )
+    return width * length * config["resnet_config"]["block_list"][-1]["out_channels"]
+
 
 def actualise_config(config):
+    resnet = [
+        int(k.replace("resnet_out_channels_l", ""))
+        for k in config.keys()
+        if "resnet_out_channels_l" in k
+    ]
+    for l in resnet:
+        config["resnet_config"]["block_list"][l]["out_channels"] = config[
+            f"resnet_out_channels_l{l}"
+        ]
+        try:
+            config["resnet_config"]["block_list"][l + 1]["in_channels"] = config[
+                f"resnet_out_channels_l{l}"
+            ]
+        except Exception():
+            pass
+    resnet = [
+        int(k.replace("resnet_kernel_size_l", ""))
+        for k in config.keys()
+        if "resnet_kernel_size_l" in k
+    ]
+    for l in resnet:
+        config["resnet_config"]["block_list"][l]["kernel_size"] = config[
+            f"resnet_kernel_size_l{l}"
+        ]
+    resnet = [
+        int(k.replace("resnet_stride_l", ""))
+        for k in config.keys()
+        if "resnet_stride_l" in k
+    ]
+    for l in resnet:
+        config["resnet_config"]["block_list"][l]["stride"] = config[
+            f"resnet_stride_l{l}"
+        ]
+    resnet = [
+        int(k.replace("resnet_padding_l", ""))
+        for k in config.keys()
+        if "resnet_padding_l" in k
+    ]
+    for l in resnet:
+        config["resnet_config"]["block_list"][l]["padding"] = config[
+            f"resnet_padding_l{l}"
+        ]
+
+    config["mlp_config"]["block_list"][0]["in_size"] = int(count_mlp_in(config))
+
     mlp = [int(k.replace("mlp_out_l", "")) for k in config.keys() if "mlp_out_l" in k]
     for l in mlp:
         config["mlp_config"]["block_list"][l]["out_size"] = config[f"mlp_out_l{l}"]
-        config["mlp_config"]["block_list"][l + 1]["in_size"] = config[f"mlp_out_l{l}"]
+        try:
+            config["mlp_config"]["block_list"][l + 1]["in_size"] = config[
+                f"mlp_out_l{l}"
+            ]
+        except Exception():
+            pass
     mlp = [int(k.replace("mlp_af_l", "")) for k in config.keys() if "mlp_af_l" in k]
     for af in mlp:
         config["mlp_config"]["block_list"][af]["activation_fun"] = config[
@@ -20,14 +125,15 @@ def actualise_config(config):
         config["mlp_config"]["block_list"][do]["dropout"] = config[f"mlp_do_l{do}"]
     return config
 
-def run_with_tune(config, epochs=50):
+
+def run_with_tune(config, max_time=60, epochs=50):
     config = actualise_config(config)
     model = plm.MNISTClassifier(config)
     dm = plm.MNISTDataModule(config["batch_size"])
     trainer = pl.Trainer(
         min_epochs=1,
         max_epochs=epochs,
-        max_time=timedelta(seconds=60),
+        max_time=timedelta(seconds=max_time),
         fast_dev_run=False,
         callbacks=[],
     )
