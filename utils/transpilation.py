@@ -65,7 +65,9 @@ def actualise_config(config):
         if "resnet_out_channels_l" in k
     ]
     for l in resnet:
-        config[f"resnet_out_channels_l{l}"] = int(np.round(config[f"resnet_out_channels_l{l}"]))
+        config[f"resnet_out_channels_l{l}"] = int(
+            np.round(config[f"resnet_out_channels_l{l}"])
+        )
         config["resnet_config"]["block_list"][l]["out_channels"] = config[
             f"resnet_out_channels_l{l}"
         ]
@@ -81,7 +83,9 @@ def actualise_config(config):
         if "resnet_kernel_size_l" in k
     ]
     for l in resnet:
-        config[f"resnet_kernel_size_l{l}"] = int(np.round(config[f"resnet_kernel_size_l{l}"]))
+        config[f"resnet_kernel_size_l{l}"] = int(
+            np.round(config[f"resnet_kernel_size_l{l}"])
+        )
         config["resnet_config"]["block_list"][l]["kernel_size"] = config[
             f"resnet_kernel_size_l{l}"
         ]
