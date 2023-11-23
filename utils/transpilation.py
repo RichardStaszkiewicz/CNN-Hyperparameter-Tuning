@@ -58,6 +58,7 @@ def count_mlp_in(config):
 
 
 def actualise_config(config):
+    config["batch_size"] = int(np.round(config["batch_size"]))
     resnet = [
         int(k.replace("resnet_out_channels_l", ""))
         for k in config.keys()
@@ -72,7 +73,7 @@ def actualise_config(config):
             config["resnet_config"]["block_list"][l + 1]["in_channels"] = config[
                 f"resnet_out_channels_l{l}"
             ]
-        except Exception():
+        except Exception:
             pass
     resnet = [
         int(k.replace("resnet_kernel_size_l", ""))
@@ -115,7 +116,7 @@ def actualise_config(config):
             config["mlp_config"]["block_list"][l + 1]["in_size"] = config[
                 f"mlp_out_l{l}"
             ]
-        except Exception():
+        except Exception:
             pass
     mlp = [int(k.replace("mlp_af_l", "")) for k in config.keys() if "mlp_af_l" in k]
     for af in mlp:
