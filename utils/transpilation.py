@@ -137,7 +137,7 @@ def actualise_config(config):
         config["mlp_config"]["block_list"][do]["dropout"] = config[f"mlp_do_l{do}"]
     return config
 
-def run_with_tune_ray(config, epochs=50):
+def run_with_tune_ray(config, epochs=50, callbacks=[]):
     config = actualise_config(config)
     print(config)
     model = plm.MNISTClassifier(config)
@@ -145,7 +145,7 @@ def run_with_tune_ray(config, epochs=50):
     trainer = pl.Trainer(
         max_epochs=epochs,
         fast_dev_run=False,
-        callbacks=[],
+        callbacks=callbacks,
     )
     trainer.fit(model, dm)
 
