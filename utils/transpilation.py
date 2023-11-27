@@ -136,6 +136,17 @@ def actualise_config(config):
         config["mlp_config"]["block_list"][do]["dropout"] = config[f"mlp_do_l{do}"]
     return config
 
+def run_with_tune_ray(config, epochs=50):
+    config = actualise_config(config)
+    print(config)
+    model = plm.MNISTClassifier(config)
+    dm = plm.MNISTDataModule(config['batch_size'])
+    trainer = pl.Trainer(
+        max_epochs=epochs,
+        fast_dev_run=False,
+        callbacks=[],
+    )
+    trainer.fit(model, dm)
 
 def run_with_tune(config, max_time=60, epochs=50):
     config = actualise_config(config)
@@ -153,13 +164,13 @@ def run_with_tune(config, max_time=60, epochs=50):
     return results
 
 
-def fn(x, HP_TUNED, METRIC, default_config):
+def fn(x, HP_TUNED, METRIC, default_config, max_time_trial=60):
     # x - population as vector of hp
     config = default_config.copy()
     config.update(dict(zip(HP_TUNED, x)))
-    results = run_with_tune(config)
+    results = run_with_tune(config, max_time=max_time_trial)
     return results[0][METRIC]
 
 
-def fx(HP_TUNED, METRIC, default_config):
-    return lambda x: fn(x, HP_TUNED, METRIC, default_config)
+def fx(HP_TUNED, METRIC, default_config, max_time_tral=60):
+    return lambda x: fn(x, HP_TUNED, METRIC, default_config, max_time_tral)
