@@ -18,9 +18,9 @@ RS_search_config = {
 
 GS_search_config = {
     "lr": tune.grid_search([0.01, 0.1]),
-    "resnet_out_channels_l0": tune.randint([8, 12, 16, 20, 24]),
-    "resnet_kernel_size_l0": tune.randint([2, 3]),
-    "resnet_stride_l0": tune.randint([1, 2]),
+    "resnet_out_channels_l0": tune.grid_search([8, 12, 16, 20, 24]),
+    "resnet_kernel_size_l0": tune.grid_search([2, 3]),
+    "resnet_stride_l0": tune.grid_search([1, 2]),
     "mlp_out_l0": tune.grid_search([64, 128]),
     "mlp_bn_l0": tune.grid_search([True, False]),
     "mlp_do_l0": tune.grid_search([0.1, 0.3]),
