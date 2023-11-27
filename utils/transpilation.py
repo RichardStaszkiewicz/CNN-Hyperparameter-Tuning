@@ -164,7 +164,7 @@ def run_with_tune(config, max_time=60, epochs=50):
         results = trainer.validate(model, dm)
         return results
     except Exception:
-        return np.Inf
+        return {"ptl/val_loss": np.Inf} # to be resolved
 
 
 def fn(x, HP_TUNED, METRIC, default_config, max_time_trial=60):
