@@ -26,6 +26,16 @@ GS_search_config = {
     "mlp_do_l0": tune.grid_search([0.1, 0.3]),
 } # Trials: 2 * 5 * 2 * 2 * 2 * 2 = 160
 
+BS_search_config = {
+    "lr": tune.uniform(0.01, 0.1),
+    "resnet_out_channels_l0": tune.uniform(8, 25),
+    "resnet_kernel_size_l0": tune.uniform(2, 5),
+    "resnet_stride_l0": tune.uniform(1, 4),
+    "mlp_out_l0": tune.uniform(64, 129),
+    "mlp_bn_l0": tune.uniform(0, 1),
+    "mlp_do_l0": tune.uniform(0.095, 0.305),
+}
+
 DES_search_config = {
     "lr": (0.01, 0.1),
     "resnet_out_channels_l0": (8, 24),
