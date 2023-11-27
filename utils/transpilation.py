@@ -2,6 +2,7 @@ from modules import plmodules as plm
 import pytorch_lightning as pl
 from datetime import timedelta
 import numpy as np
+import json
 
 
 def count_mlp_in(config):
@@ -150,6 +151,7 @@ def run_with_tune_ray(config, epochs=50):
 
 def run_with_tune(config, max_time=60, epochs=50):
     config = actualise_config(config)
+    print(json.dumps(config, indent=4))
     model = plm.MNISTClassifier(config)
     dm = plm.MNISTDataModule(config["batch_size"])
     trainer = pl.Trainer(
@@ -163,17 +165,21 @@ def run_with_tune(config, max_time=60, epochs=50):
         trainer.fit(model, dm)
         results = trainer.validate(model, dm)
         return results
-    except Exception:
+    except Exception as e:
+        # raise e
+        print(e)
         return [{"ptl/val_loss": np.Inf}] # to be resolved
 
 
-def fn(x, HP_TUNED, METRIC, default_config, max_time_trial=60):
+def fn(x, HP_TUNED, METRIC, default_config, max_time_trial=60, debug=False):
     # x - population as vector of hp
     config = default_config.copy()
+    if debug:
+        print(json.dumps(dict(zip(HP_TUNED, x)), indent=4))
     config.update(dict(zip(HP_TUNED, x)))
     results = run_with_tune(config, max_time=max_time_trial)
     return results[0][METRIC]
 
 
-def fx(HP_TUNED, METRIC, default_config, max_time_tral=60):
-    return lambda x: fn(x, HP_TUNED, METRIC, default_config, max_time_tral)
+def fx(HP_TUNED, METRIC, default_config, max_time_tral=60, debug=False):
+    return lambda x: fn(x, HP_TUNED, METRIC, default_config, max_time_tral, debug)
