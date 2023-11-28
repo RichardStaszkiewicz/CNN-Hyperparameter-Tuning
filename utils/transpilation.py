@@ -145,6 +145,7 @@ def run_with_tune_ray(config, epochs=50, callbacks=[]):
     trainer = pl.Trainer(
         max_epochs=epochs,
         fast_dev_run=False,
+        enable_checkpointing=False,
         callbacks=callbacks,
     )
     trainer.fit(model, dm)
@@ -158,6 +159,7 @@ def run_with_tune(config, max_time=60, epochs=50):
         min_epochs=1,
         max_epochs=epochs,
         max_time=timedelta(seconds=max_time),
+        enable_checkpointing=False,
         fast_dev_run=False,
         callbacks=[],
     )
