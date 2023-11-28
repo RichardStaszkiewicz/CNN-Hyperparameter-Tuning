@@ -139,7 +139,6 @@ def actualise_config(config):
 
 def run_with_tune_ray(config, epochs=50, callbacks=[]):
     config = actualise_config(config)
-    print(config)
     model = plm.MNISTClassifier(config)
     dm = plm.MNISTDataModule(config['batch_size'])
     trainer = pl.Trainer(
@@ -152,7 +151,7 @@ def run_with_tune_ray(config, epochs=50, callbacks=[]):
 
 def run_with_tune(config, max_time=60, epochs=50):
     config = actualise_config(config)
-    print(json.dumps(config, indent=4))
+    # print(json.dumps(config, indent=4))
     model = plm.MNISTClassifier(config)
     dm = plm.MNISTDataModule(config["batch_size"])
     trainer = pl.Trainer(
