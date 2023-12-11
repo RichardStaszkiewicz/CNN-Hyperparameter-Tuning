@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import time
+import pandas as pd
 
 
 def des_classic(par, fn, lower=None, upper=None, **kwargs):
@@ -427,7 +428,7 @@ class des_tuner_wrapper(object):
             lower=np.array([self.search_config[hp][0] for hp in self.hp_tuned]),
             **kwargs
         )
-        result["hp_names"] = self.hp_tuned
+        result["hp_names"] = list(self.hp_tuned)
         return result
 
 
@@ -445,17 +446,17 @@ if __name__ == "__main__":
         "time": 5,
         "diag": True,
     }
-    result = des_classic(par, fn, **kwargs)
-    print(result)
-    # result = des_tuner_wrapper(
-    #     fn,
-    #     {"x1": -50, "x2": -20, "x3": -100, "x4": 10},
-    #     {"x1": (-101, -5), "x2": (-101, -23.3), "x3": (-101, 14), "x4": (3, 11)},
-    # ).fit(
-    #     {
-    #         "stopfitness": 1e-10,
-    #         "lambda": 100,
-    #         "time": 5,
-    #     }
-    # )
+    # result = des_classic(par, fn, **kwargs)
     # print(result)
+    result = des_tuner_wrapper(
+        fn,
+        {"x1": -50, "x2": -20, "x3": -100, "x4": 10},
+        {"x1": (-101, -5), "x2": (-101, -23.3), "x3": (-101, 14), "x4": (3, 11)},
+    ).fit(
+        {
+            "stopfitness": 1e-10,
+            "lambda": 20,
+            "time": 20,
+            "diag": True
+        }
+    )
