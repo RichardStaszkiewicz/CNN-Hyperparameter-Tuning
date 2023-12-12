@@ -1,6 +1,11 @@
 # Current
 hpoptimizers/
 data/
+test.ipynb
+des_test.py
+
+# From colab
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

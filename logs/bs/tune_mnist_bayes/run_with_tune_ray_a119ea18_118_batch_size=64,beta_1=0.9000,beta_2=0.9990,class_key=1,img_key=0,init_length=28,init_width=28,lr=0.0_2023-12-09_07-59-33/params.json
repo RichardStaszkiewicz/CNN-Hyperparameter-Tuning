@@ -1,0 +1,61 @@
+{
+  "batch_size": 64,
+  "beta_1": 0.9,
+  "beta_2": 0.999,
+  "class_key": 1,
+  "img_key": 0,
+  "init_length": 28,
+  "init_width": 28,
+  "lr": 0.0921394563714554,
+  "mlp_bn_l0": 0.45164801572867985,
+  "mlp_config": {
+    "block_list": [
+      {
+        "activation_fun": "relu",
+        "batch_norm": true,
+        "dropout": 0.1,
+        "in_size": 72,
+        "out_size": 64
+      },
+      {
+        "activation_fun": "logsoftmax",
+        "batch_norm": false,
+        "dropout": 0.0,
+        "in_size": 64,
+        "out_size": 10
+      }
+    ]
+  },
+  "mlp_do_l0": 0.09666313593473756,
+  "mlp_out_l0": 121.27532398690501,
+  "resnet_config": {
+    "block_list": [
+      {
+        "in_channels": 32,
+        "kernel_size": 3,
+        "out_channels": 16,
+        "padding": 1,
+        "stride": 2
+      },
+      {
+        "in_channels": 16,
+        "kernel_size": 3,
+        "out_channels": 8,
+        "padding": "same",
+        "stride": 1
+      }
+    ],
+    "first_conv": {
+      "in_channels": 1,
+      "kernel_size": 3,
+      "out_channels": 32,
+      "padding": 1,
+      "stride": 2
+    },
+    "pool_size": 2
+  },
+  "resnet_out_channels_l0": 18.60397348621415,
+  "resnet_out_channels_l1": 14.844913447913386,
+  "resnet_stride_l0": 2.4684835796156355,
+  "weight_decay": 0.0001
+}

@@ -1,0 +1,2 @@
+ptl/train_loss,ptl/train_accuracy,ptl/val_loss,ptl/val_accuracy,timestamp,checkpoint_dir_name,done,training_iteration,trial_id,date,time_this_iter_s,time_total_s,pid,hostname,node_ip,time_since_restore,iterations_since_restore
+2.3110342025756836,0.15625,2.315600872039795,0.09884868562221527,1702112671,,True,1,f21d79c8,2023-12-09_09-04-31,33.38190221786499,33.38190221786499,6982,a189fc2a2978,172.28.0.12,33.38190221786499,1
