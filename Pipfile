@@ -9,6 +9,8 @@ torch = "*"
 lightning = "*"
 torchvision = "*"
 tensorboard = "*"
+matplotlib = "*"
+scipy = "*"
 
 [dev-packages]
 black = "*"
