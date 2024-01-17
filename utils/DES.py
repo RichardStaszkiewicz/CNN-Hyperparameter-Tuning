@@ -5,24 +5,126 @@ import pandas as pd
 
 
 def des_classic(par, fn, lower=None, upper=None, **kwargs):
-    print(kwargs)
+    """
+    Differential Evolution Strategy with classic control parameters.
+
+    Parameters:
+    - par (list): Initial parameter values.
+    - fn (function): Objective function to be minimized.
+    - lower (float or list, optional): Lower bounds for each parameter. If None, default is -100 for each parameter.
+    - upper (float or list, optional): Upper bounds for each parameter. If None, default is 100 for each parameter.
+    - **kwargs (dict): Additional control parameters for the algorithm.
+
+    Returns:
+    - dict: Result dictionary containing the following keys:
+        - "par": List of the best parameter values found.
+        - "value": The objective function value corresponding to the best parameters.
+        - "counts": Dictionary containing the count of function evaluations (`"function"`).
+        - "resets": Number of restarts performed.
+        - "convergence": Flag indicating convergence (1 if reached maximum iterations, 0 otherwise).
+        - "time": Total execution time in seconds.
+        - "message": String message indicating the reason for termination.
+        - "diagnostic": Dictionary containing diagnostic logs if enabled.
+
+    Notes:
+    - This implementation uses a classic differential evolution strategy with control parameters.
+    - The objective function `fn` should take a parameter vector and return a scalar value to be minimized.
+    - Control parameters can be passed through the `**kwargs` dictionary.
+    """
 
     def control_param(name, default):
+        """
+        Get the value of a control parameter from keyword arguments or return the default.
+
+        Parameters:
+        - name (str): Name of the control parameter.
+        - default: Default value to return if the parameter is not present in the keyword arguments.
+
+        Returns:
+        - Value of the specified control parameter if present, otherwise the default value.
+
+        Notes:
+        - This function is used to retrieve a control parameter from keyword arguments (`kwargs`).
+        - If the parameter with the given name is present in the `kwargs`, its value is returned.
+        - If the parameter is not present, the default value is returned.
+        """
         v = kwargs[name] if name in kwargs.keys() else None
         return v if v is not None else default
 
     def sample_from_history(history, history_sample, lmbda):
+        """
+        Sample indices from a historical population based on given history and sample indices.
+
+        Parameters:
+        - history (list): List containing historical populations.
+        - history_sample (list): List of indices indicating which historical populations to sample from.
+        - lmbda (int): Number of samples to generate.
+
+        Returns:
+        - list: List of sampled indices from historical populations.
+
+        Notes:
+        - This function is used to randomly sample indices from historical populations based on provided history
+        and sample indices.
+        - It returns a list of 'lmbda' indices, each representing a random index from a selected historical population.
+        """
         ret = []
         for _ in range(lmbda):
             ret.append(random.randint(0, len(history[history_sample[_]].T) - 1))
         return ret
 
     def delete_infs_nans(x):
+        """
+        Replace NaN and Inf values in the given array with the maximum finite float value.
+
+        Parameters:
+        - x (numpy.ndarray): Input array containing numerical values.
+
+        Returns:
+        - numpy.ndarray: Array with NaN and Inf values replaced by the maximum finite float value.
+
+        Notes:
+        - This function is used to handle NaN (Not a Number) and Inf (Infinity) values in an input array.
+        - It replaces all NaN values with the maximum finite float value.
+        - It replaces all Inf values with the maximum finite float value.
+
+        Examples:
+        ```python
+        # Example Usage:
+        arr = np.array([1.0, 2.0, np.nan, np.inf, -np.inf])
+        result = delete_infs_nans(arr)
+        print(result)
+        # Output: array([ 1.,  2., 1.7976931348623157e+308, 1.7976931348623157e+308, 1.7976931348623157e+308])
+        ```
+        """
         x[np.isnan(x)] = np.finfo(float).max
         x[np.isinf(x)] = np.finfo(float).max
         return x
 
     def fn_(x):
+        """
+        Evaluate the objective function for a given input vector within specified bounds.
+
+        Parameters:
+        - x (numpy.ndarray): Input vector to be evaluated.
+
+        Returns:
+        - float: Objective function value for the input vector or maximum finite float value if outside bounds.
+
+        Notes:
+        - This function evaluates the objective function 'fn' for a given input vector 'x'.
+        - It checks whether all elements of 'x' are within the specified lower and upper bounds.
+        - If the input vector is within bounds, it increments the global counteval variable and returns the
+        result of evaluating 'fn' on the input vector.
+        - If the input vector is outside bounds, it returns the maximum finite float value.
+
+        Examples:
+        ```python
+        # Example Usage:
+        result = fn_(np.array([1.0, 2.0, 3.0]))
+        print(result)
+        ```
+        """
         if all(x >= lower) and all(x <= upper):
             nonlocal counteval
             counteval += 1
@@ -31,6 +133,29 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
             return np.finfo(float).max
 
     def fn_l(P):
+        """
+        Evaluate the objective function for a population matrix within specified bounds.
+
+        Parameters:
+        - P (numpy.ndarray): Population matrix where each column represents an input vector.
+
+        Returns:
+        - numpy.ndarray: Array of objective function values for the input vectors or maximum finite float values if outside bounds.
+
+        Notes:
+        - This function evaluates the objective function 'fn_' for a population matrix 'P'.
+        - If 'P' is a 2D array (matrix), it applies 'fn_' to each column (individual) of the matrix.
+        - It checks whether the cumulative counteval plus the number of columns in 'P' is within the specified budget.
+        - If within budget, it returns an array of objective function values for each individual.
+        - If outside budget, it returns an array with maximum finite float values for individuals beyond the budget.
+
+        Examples:
+        ```python
+        # Example Usage:
+        result = fn_l(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
+        print(result)
+        ```
+        """
         if P.ndim > 1:
             if counteval + P.shape[1] <= budget:
                 return np.apply_along_axis(fn_, 0, P)
@@ -50,6 +175,32 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
                 return np.finfo(float).max
 
     def fn_d(P, P_repaired, fitness):
+        """
+        Evaluate the fitness of a population matrix considering repaired individuals.
+
+        Parameters:
+        - P (numpy.ndarray): Original population matrix where each column represents an input vector.
+        - P_repaired (numpy.ndarray): Repaired population matrix with the same structure as 'P'.
+        - fitness (numpy.ndarray): Original fitness values corresponding to the individuals in 'P'.
+
+        Returns:
+        - numpy.ndarray: Array of fitness values considering repaired individuals.
+
+        Notes:
+        - This function calculates the fitness of a population matrix 'P' while considering repaired individuals.
+        - It checks for inconsistencies between the original and repaired populations, applying penalties if repairs were made.
+        - If both 'P' and 'P_repaired' are 2D arrays (matrices), it calculates the fitness for each corresponding pair of individuals.
+        - If inconsistencies are detected, penalties are applied to the fitness values accordingly.
+
+        Examples:
+        ```python
+        # Example Usage:
+        result = fn_d(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+                    np.array([[1.5, 2.0, 3.0], [4.0, 5.5, 6.0]]),
+                    np.array([10.0, 15.0]))
+        print(result)
+        ```
+        """
         P = delete_infs_nans(P)
         P_repaired = delete_infs_nans(P_repaired)
 
@@ -68,6 +219,27 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
             return P_fit
 
     def bounce_back_boundary2(x):
+        """
+        Bounce back the elements of a vector within specified lower and upper bounds.
+
+        Parameters:
+        - x (numpy.ndarray): Input vector to be bounded.
+
+        Returns:
+        - numpy.ndarray: Bounded vector after applying bounce-back conditions.
+
+        Notes:
+        - This function ensures that each element of the input vector 'x' is within the specified lower and upper bounds.
+        - If any element in 'x' exceeds the bounds, it is adjusted by bouncing back from the boundaries.
+        - The bounce-back adjustment involves determining the excess distance beyond the bounds and applying it in the opposite direction.
+
+        Examples:
+        ```python
+        # Example Usage:
+        result = bounce_back_boundary2(np.array([1.5, 0.5, 2.5]), lower=np.array([1.0, 0.0, 2.0]), upper=np.array([2.0, 1.0, 3.0]))
+        print(result)
+        ```
+        """
         if all(x >= lower) and all(x <= upper):
             return x
         elif any(x < lower):
@@ -411,9 +583,42 @@ def des_classic(par, fn, lower=None, upper=None, **kwargs):
 
 
 class des_tuner_wrapper(object):
+    """
+    Wrapper class for tuning hyperparameters using Differential Evolution Strategy.
+
+    Parameters:
+    - evaluation_fc (function): Objective function to be minimized.
+    - start_config (dict): Initial configuration for hyperparameters {HP_name: value}.
+    - search_config (dict): Search space configuration for hyperparameters {HP_name: (lower, upper)}.
+
+    Methods:
+    - __init__(self, evaluation_fc, start_config, search_config) -> None:
+        Initializes the wrapper with the given parameters.
+
+    - fit(self, kwargs: dict):
+        Optimizes hyperparameters using Differential Evolution Strategy.
+
+        Parameters:
+        - kwargs (dict): Additional control parameters for the optimization.
+
+        Returns:
+        - dict: Result dictionary containing optimization details.
+
+    Notes:
+    - The objective function `evaluation_fc` should take a parameter vector and return a scalar value to be minimized.
+    - The search space for hyperparameters is defined by the `search_config` dictionary.
+    - The initial configuration for hyperparameters is provided by the `start_config` dictionary.
+    - Additional control parameters for the optimization can be passed through the `kwargs` dictionary.
+    """
+
     def __init__(self, evaluation_fc, start_config: dict, search_config: dict) -> None:
         """
-        config -> dict: {HP_name: (lower, upper)}
+        Initializes the wrapper with the given parameters.
+
+        Parameters:
+        - evaluation_fc (function): Objective function to be minimized.
+        - start_config (dict): Initial configuration for hyperparameters {HP_name: value}.
+        - search_config (dict): Search space configuration for hyperparameters {HP_name: (lower, upper)}.
         """
         self.eval_fc = evaluation_fc
         self.search_config = search_config
@@ -421,6 +626,15 @@ class des_tuner_wrapper(object):
         self.hp_tuned = search_config.keys()
 
     def fit(self, kwargs: dict):
+        """
+        Optimizes hyperparameters using Differential Evolution Strategy.
+
+        Parameters:
+        - kwargs (dict): Additional control parameters for the optimization.
+
+        Returns:
+        - dict: Result dictionary containing optimization details.
+        """
         result = des_classic(
             np.array([self.default_config[hp] for hp in self.hp_tuned]),
             self.eval_fc,
@@ -452,11 +666,4 @@ if __name__ == "__main__":
         fn,
         {"x1": -50, "x2": -20, "x3": -100, "x4": 10},
         {"x1": (-101, -5), "x2": (-101, -23.3), "x3": (-101, 14), "x4": (3, 11)},
-    ).fit(
-        {
-            "stopfitness": 1e-10,
-            "lambda": 20,
-            "time": 20,
-            "diag": True
-        }
-    )
+    ).fit({"stopfitness": 1e-10, "lambda": 20, "time": 20, "diag": True})

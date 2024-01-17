@@ -11,6 +11,10 @@ torchvision = "*"
 tensorboard = "*"
 matplotlib = "*"
 scipy = "*"
+ray = "*"
+torchmetrics = "*"
+pandas = "*"
+bayesian-optimization = "*"
 
 [dev-packages]
 black = "*"

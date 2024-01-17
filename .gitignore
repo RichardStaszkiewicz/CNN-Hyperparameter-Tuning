@@ -3,6 +3,9 @@ hpoptimizers/
 data/
 test_des.ipynb
 des_test.py
+model/model.py
+model/ExampleModel.py
+utils/show.py
 
 # From colab
 *.zip

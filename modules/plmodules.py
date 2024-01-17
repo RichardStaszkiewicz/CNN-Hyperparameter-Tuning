@@ -11,6 +11,23 @@ from torchmetrics import Accuracy
 
 
 class MNISTDataModule(pl.LightningDataModule):
+    """
+    LightningDataModule for handling MNIST dataset loading and processing.
+
+    Parameters:
+    - batch_size (int): Batch size for DataLoader.
+    - train_transform (torchvision.transforms.Compose, optional): Transformation applied to training data.
+    - test_transform (torchvision.transforms.Compose, optional): Transformation applied to test data.
+    - image_size (int, optional): Size of the images (default is 28).
+    - train_valid_split (float, optional): Split ratio between training and validation data (default is 0.8).
+
+    Methods:
+    - setup(stage=None): Setup method to download and split the MNIST dataset into training, validation, and test sets.
+    - train_dataloader(): Returns DataLoader for the training set.
+    - val_dataloader(): Returns DataLoader for the validation set.
+    - test_dataloader(): Returns DataLoader for the test set.
+    """
+
     def __init__(
         self,
         batch_size,
@@ -19,6 +36,16 @@ class MNISTDataModule(pl.LightningDataModule):
         image_size=None,
         train_valid_split=None,
     ):
+        """
+        Initializes MNISTDataModule with specified parameters.
+
+        Parameters:
+        - batch_size (int): Batch size for DataLoader.
+        - train_transform (torchvision.transforms.Compose, optional): Transformation applied to training data.
+        - test_transform (torchvision.transforms.Compose, optional): Transformation applied to test data.
+        - image_size (int, optional): Size of the images (default is 28).
+        - train_valid_split (float, optional): Split ratio between training and validation data (default is 0.8).
+        """
         super().__init__()
         self.image_size = image_size if image_size is not None else 28
         self.train_transform = (
@@ -52,6 +79,12 @@ class MNISTDataModule(pl.LightningDataModule):
         )
 
     def setup(self, stage=None):
+        """
+        Setup method to download and split the MNIST dataset into training, validation, and test sets.
+
+        Parameters:
+        - stage (str, optional): Stage of setup (default is None).
+        """
         whole_train_dataset = datasets.FashionMNIST(
             root="data", train=True, transform=self.train_transform, download=True
         )
@@ -75,7 +108,37 @@ class MNISTDataModule(pl.LightningDataModule):
 
 
 class MNISTClassifier(pl.LightningModule):
+    """
+    LightningModule for a classifier model on the MNIST dataset.
+
+    Parameters:
+    - config (dict): Configuration dictionary containing model hyperparameters.
+
+    Methods:
+    - cross_entropy_loss(logits, labels): Computes the cross-entropy loss between logits and target labels.
+    - forward(x): Forward pass of the model.
+    - training_step(train_batch, batch_idx): Training step for a batch of data.
+    - validation_step(val_batch, batch_idx): Validation step for a batch of data.
+    - on_validation_epoch_end(): Computes and logs average validation loss and accuracy at the end of each validation epoch.
+    - configure_optimizers(): Configures the Adam optimizer.
+
+    Attributes:
+    - accuracy (torchmetrics.classification.Accuracy): Metric for calculating accuracy.
+    - mlp (MLP): Multi-layer perceptron module.
+    - resnet (ResNet): Residual neural network module.
+    - lr (float): Learning rate for the optimizer.
+    - weight_decay (float): Weight decay for the optimizer.
+    - betas (tuple): Tuple containing beta values for the Adam optimizer.
+    - validation_step_outputs (list): List to store validation step outputs during an epoch.
+    """
+
     def __init__(self, config):
+        """
+        Initializes MNISTClassifier with the specified configuration.
+
+        Parameters:
+        - config (dict): Configuration dictionary containing model hyperparameters.
+        """
         super(MNISTClassifier, self).__init__()
         self.accuracy = Accuracy("multiclass", num_classes=10)
         self.mlp = MLP(**config["mlp_config"])
@@ -87,14 +150,42 @@ class MNISTClassifier(pl.LightningModule):
         self.validation_step_outputs = []
 
     def cross_entropy_loss(self, logits, labels):
+        """
+        Computes the cross-entropy loss between logits and target labels.
+
+        Parameters:
+        - logits (torch.Tensor): Logits predicted by the model.
+        - labels (torch.Tensor): Target labels.
+
+        Returns:
+        - torch.Tensor: Cross-entropy loss.
+        """
         return F.nll_loss(logits, labels)
 
     def forward(self, x):
+        """
+        Forward pass of the model.
+
+        Parameters:
+        - x (torch.Tensor): Input data.
+
+        Returns:
+        - torch.Tensor: Model output.
+        """
         out = self.resnet(x)
         out = self.mlp(out)
         return out
 
-    def training_step(self, train_batch, batch_idx):
+    def training_step(self, train_batch):
+        """
+        Training step for a batch of data.
+
+        Parameters:
+        - train_batch (tuple): Batch of training data.
+
+        Returns:
+        - torch.Tensor: Training loss.
+        """
         x, y = train_batch
         logits = self.forward(x)
         loss = self.cross_entropy_loss(logits, y)
@@ -104,7 +195,17 @@ class MNISTClassifier(pl.LightningModule):
         self.log("ptl/train_accuracy", accuracy)
         return loss
 
-    def validation_step(self, val_batch, batch_idx):
+    def validation_step(self, val_batch):
+        """
+        Validation step for a batch of data.
+
+        Parameters:
+        - val_batch (tuple): Batch of validation data.
+        - batch_idx (int): Batch index.
+
+        Returns:
+        - dict: Dictionary containing validation loss and accuracy.
+        """
         x, y = val_batch
         logits = self.forward(x)
         loss = self.cross_entropy_loss(logits, y)
@@ -116,6 +217,9 @@ class MNISTClassifier(pl.LightningModule):
         return {"val_loss": loss, "val_accuracy": accuracy}
 
     def on_validation_epoch_end(self):
+        """
+        Computes and logs average validation loss and accuracy at the end of each validation epoch.
+        """
         avg_loss = torch.stack(
             [x["val_loss"] for x in self.validation_step_outputs]
         ).mean()
@@ -126,6 +230,12 @@ class MNISTClassifier(pl.LightningModule):
         self.log("ptl/val_accuracy", avg_acc)
 
     def configure_optimizers(self):
+        """
+        Configures the Adam optimizer.
+
+        Returns:
+        - torch.optim.Optimizer: Configured optimizer.
+        """
         optimizer = torch.optim.Adam(
             self.parameters(),
             lr=self.lr,
