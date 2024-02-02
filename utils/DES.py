@@ -660,10 +660,5 @@ if __name__ == "__main__":
         "time": 5,
         "diag": True,
     }
-    # result = des_classic(par, fn, **kwargs)
-    # print(result)
-    result = des_tuner_wrapper(
-        fn,
-        {"x1": -50, "x2": -20, "x3": -100, "x4": 10},
-        {"x1": (-101, -5), "x2": (-101, -23.3), "x3": (-101, 14), "x4": (3, 11)},
-    ).fit({"stopfitness": 1e-10, "lambda": 20, "time": 20, "diag": True})
+    result = des_classic(par, fn, **kwargs)
+    print(result)
